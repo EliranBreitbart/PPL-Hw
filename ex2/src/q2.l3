@@ -1,78 +1,203 @@
+#lang racket/base
 
+;;;;;;; Q2.1.a ;;;;;;;
+
+(define first (lambda (l) (car l)))
+
+(define second (lambda (l) (car (cdr l))))
+
+(define third (lambda (l) (car (cdr (cdr l)))))
+
+; Signature: make-ok(x)
+; Type: 
+; Purpose: gets a value and encapsulates it as an ok structure of type result
+; Pre-conditions: none
+; Tests: 
 (define make-ok
-  (lambda (val)
-    @TODO
-  )
- )
- 
-(define make-error
-  (lambda (msg)
-    @TODO
-  )
- )
+  (lambda (val) (cons "result" (cons "ok" (cons val '())))))
 
+; Signature: 
+; Type:
+; Purpose: gets an error string and encapsulates it as an ‘error’ structure of type result
+; Pre-conditions: 
+; Tests:
+(define make-error
+  (lambda (msg) (cons "result" (cons "error" (cons msg '())))))
+
+; Signature:
+; Type:
+; Purpose:
+; Pre-conditions:
+; Tests:
 (define ok?
   (lambda (res)
-    @TODO
-  )
- )
+    (if(result? res)  
+       (if(equal?(second res) "ok")
+          #t
+          #f)
+       #f)))
+  
 
+; Signature:
+; Type:
+; Purpose:
+; Pre-conditions:
+; Tests:
 (define error?
   (lambda (res)
-    @TODO
-  )
- )
+    (if(result? res) 
+       (if(equal?(second res) "error")
+          #t
+          #f)
+       #f)))
 
+; Signature:
+; Type:
+; Purpose:
+; Pre-conditions:
+; Tests:
 (define result?
   (lambda (res)
-    @TODO
-  )
- )
+    (if(list? res)
+       (if (=(length res) 3)
+           (if (equal? (first res) "result")
+               #t
+               #f)
+           #f)
+       #f)))
 
+; Signature:
+; Type:
+; Purpose:
+; Pre-conditions:
+; Tests:
 (define result->val
-  (lambda (res)
-    @TODO
-  )
-)
+  (lambda (res) (third res)))
+  
 
-(define bind 
+;;;;;;; Q2.1.b ;;;;;;;
+
+(define empty?
+  (lambda (lst)
+    (eq? lst '())))
+
+; Signature:
+; Type:
+; Purpose:
+; Pre-conditions:
+; Tests:
+(define bind
   (lambda (f)
-    @TODO
-  )
-)
+    (lambda (result)
+      (if (ok? result)
+          (f (third result))
+          result))))
 
+
+;;;;;;; Q2.2 ;;;;;;;
+
+; Signature:
+; Type:
+; Purpose:
+; Pre-conditions:
+; Tests:
 (define make-dict
-  (lambda ()
-    @TODO
-  )
-)
+  (lambda () (cons "dict" '())))
 
+; Signature:
+; Type:
+; Purpose:
+; Pre-conditions:
+; Tests:
 (define dict?
   (lambda (e)
-    @TODO
-  )
-)
+    (if (list? e)
+        (if (equal? (first e) "dict")
+            #t
+            #f)
+        #f)))
 
-(define get
-  (lambda (dict k)
-    @TODO
-  )
-)
+(define makePair
+  (lambda (key value) (cons key value)))
 
+(define getFirstKeyPair
+  (lambda (dict) (car (car dict))))
+  
+(define addToDict 
+  (lambda (dict key value)
+    (if (empty? dict)
+     (cons (makePair key value) '())
+     (if(equal? (getFirstKeyPair dict) key)
+        (cons (makePair key value) (cdr dict))
+        (cons (car dict) (addToDict (cdr dict) key value))))))
+    
+; Signature:
+; Type:
+; Purpose:
+; Pre-conditions:
+; Tests:
 (define put
   (lambda (dict k v)
-    @TODO
-  )
-)
+    (if (dict? dict)
+        (make-ok (cons "dict" (addToDict (cdr dict) k v)))
+        (make-error "Error: not a dictionary"))))
 
+(define recursiveGetPair
+  (lambda (dict key)
+    (if (empty? dict)
+        '()
+        (if (equal? (car(car dict)) key)
+            (car dict)
+            (recursiveGetPair (cdr dict) key)))))
+
+; Signature:
+; Type:
+; Purpose:
+; Pre-conditions:
+; Tests:
+(define get
+  (lambda (dict k)
+  (if (dict? dict)      
+      (if (empty?(recursiveGetPair (cdr dict) k))
+          (make-error "Key not found")
+          (make-ok(cdr (recursiveGetPair (cdr dict) k))))
+      (make-error "Error: not a dictionary"))))
+
+;map-pairList gets a list of pairs, and applies f on each value of a pair
+(define map-pairList
+  (lambda (f list)
+    (if (empty? list)
+        '()
+        (cons (makePair (car (car list)) (f (cdr (car list)))) (map-pairList f (cdr list))))))
+
+
+; Signature:
+; Type:
+; Purpose:
+; Pre-conditions:
+; Tests:
 (define map-dict
   (lambda (dict f)
-    @TODO
-  )
-)
+    (if (dict? dict)
+        (make-ok (cons "dict" (map-pairList f (cdr dict))))
+        (make-error ("Error: not a dictionary")))))
 
+
+(define filter-pairList
+  (lambda (pred list)
+    (if (empty? list)
+        '()
+        (if (pred (car (car list)) (cdr (car list)))
+            (cons (car list) (filter-pairList pred (cdr list)))
+            (filter-pairList pred (cdr list))))))
+
+; Signature:
+; Type:
+; Purpose:
+; Pre-conditions:
+; Tests:
 (define filter-dict
   (lambda (dict pred)
-    @TODO
-  )
-)
+    (if (dict? dict)
+        (make-ok (cons "dict" (filter-pairList pred (cdr dict))))
+        (make-error ("Error: not a dictionary")))))
