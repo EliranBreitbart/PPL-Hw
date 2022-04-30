@@ -6,7 +6,7 @@ import { first, second, rest, allT, isEmpty } from "../shared/list";
 import { isArray, isString, isNumericString, isIdentifier } from "../shared/type-predicates";
 import { Result, makeOk, makeFailure, bind, mapResult, mapv } from "../shared/result";
 import { parse as p, isSexpString, isToken } from "../shared/parser";
-import parse, { Sexp, Token } from "s-expression";
+import { Sexp, Token } from "s-expression";
 
 /*
 ;; =============================================================================
@@ -35,13 +35,13 @@ import parse, { Sexp, Token } from "s-expression";
 ;;         |  ( <cexp> <cexp>* )            / AppExp(operator:CExp, operands:CExp[]))
 ;; <binding>  ::= ( <var> <cexp> )           / Binding(var:VarDecl, val:Cexp)
 ;; <prim-op>  ::= + | - | * | / | < | > | = | not |  and | or | eq? | string=?
-;;                  | cons | car | cdr | pair? | number? | list
+;;                  | cons | car | cdr | pair? | number? | list 
 ;;                  | boolean? | symbol? | string?      ##### L3
 ;; <num-exp>  ::= a number token
 ;; <bool-exp> ::= #t | #f
 ;; <var-ref>  ::= an identifier token
 ;; <var-decl> ::= an identifier token
-;; <sexp>     ::= symbol | number | bool | string |
+;; <sexp>     ::= symbol | number | bool | string | 
 ;;                (<sexp>+ . <sexp>) | ( <sexp>* )       ##### L3
 */
 
@@ -66,7 +66,6 @@ export interface Binding {tag: "Binding"; var: VarDecl; val: CExp; }
 export interface LetExp {tag: "LetExp"; bindings: Binding[]; body: CExp[]; }
 // L3
 export interface LitExp {tag: "LitExp"; val: SExpValue; }
-export interface LetPlusExp {tag : "LetPlusExp", bindings : Binding[]; body : CExp[]}
 
 // Type value constructors for disjoint types
 export const makeProgram = (exps: Exp[]): Program => ({tag: "Program", exps: exps});
@@ -93,9 +92,6 @@ export const makeLetExp = (bindings: Binding[], body: CExp[]): LetExp =>
 export const makeLitExp = (val: SExpValue): LitExp =>
     ({tag: "LitExp", val: val});
 
-export const makeLetPlusExp = (bindings: Binding[], body: CExp[]): LetPlusExp =>
-    ({tag: "LetPlusExp", bindings: bindings, body: body});
-
 // Type predicates for disjoint types
 export const isProgram = (x: any): x is Program => x.tag === "Program";
 export const isDefineExp = (x: any): x is DefineExp => x.tag === "DefineExp";
@@ -113,7 +109,6 @@ export const isProcExp = (x: any): x is ProcExp => x.tag === "ProcExp";
 export const isBinding = (x: any): x is Binding => x.tag === "Binding";
 export const isLetExp = (x: any): x is LetExp => x.tag === "LetExp";
 // L3
-export const isLetPlusExp = (x: any): x is LetPlusExp => x.tag === "LetPlusExp";
 export const isLitExp = (x: any): x is LitExp => x.tag === "LitExp";
 
 // Type predicates for type unions
@@ -151,7 +146,7 @@ export const parseL3Exp = (sexp: Sexp): Result<Exp> =>
     sexp;
 
 // Compound -> DefineExp | CompoundCExp
-export const parseL3CompoundExp = (op: Sexp, params: Sexp[]): Result<Exp> =>
+export const parseL3CompoundExp = (op: Sexp, params: Sexp[]): Result<Exp> => 
     op === "define"? parseDefine(params) :
     parseL3CompoundCExp(op, params);
 
@@ -165,7 +160,6 @@ export const parseL3SpecialForm = (op: Sexp, params: Sexp[]): Result<CExp> =>
     op === "if" ? parseIfExp(params) :
     op === "lambda" ? parseProcExp(first(params), rest(params)) :
     op === "let" ? parseLetExp(first(params), rest(params)) :
-    op === "let*" ? parseLetPlusExp(first(params),rest(params)) :
     op === "quote" ? parseLitExp(first(params)) :
     makeFailure("Never");
 
@@ -195,7 +189,7 @@ export const parseL3Atomic = (token: Token): Result<CExp> =>
     isString(token) && isPrimitiveOp(token) ? makeOk(makePrimOp(token)) :
     isString(token) ? makeOk(makeVarRef(token)) :
     makeOk(makeStrExp(token.toString()));
-;
+
 /*
     ;; <prim-op>  ::= + | - | * | / | < | > | = | not | and | or | eq? | string=?
     ;;                  | cons | car | cdr | pair? | number? | list
@@ -210,13 +204,13 @@ const isSpecialForm = (x: string): boolean =>
     ["if", "lambda", "let", "quote"].includes(x);
 
 const parseAppExp = (op: Sexp, params: Sexp[]): Result<AppExp> =>
-    bind(parseL3CExp(op), (rator: CExp) =>
+    bind(parseL3CExp(op), (rator: CExp) => 
         mapv(mapResult(parseL3CExp, params), (rands: CExp[]) =>
             makeAppExp(rator, rands)));
 
 const parseIfExp = (params: Sexp[]): Result<IfExp> =>
     params.length !== 3 ? makeFailure("Expression not of the form (if <cexp> <cexp> <cexp>)") :
-    mapv(mapResult(parseL3CExp, params), (cexps: CExp[]) =>
+    mapv(mapResult(parseL3CExp, params), (cexps: CExp[]) => 
         makeIfExp(cexps[0], cexps[1], cexps[2]));
 
 const parseProcExp = (vars: Sexp, body: Sexp[]): Result<ProcExp> =>
@@ -239,41 +233,21 @@ const parseLetExp = (bindings: Sexp, body: Sexp[]): Result<LetExp> => {
     const vars = map(b => b[0], bindings);
     const valsResult = mapResult(parseL3CExp, map(second, bindings));
     const bindingsResult = mapv(valsResult, (vals: CExp[]) => zipWith(makeBinding, vars, vals));
-    return bind(bindingsResult, (bindings: Binding[]) =>
+    return bind(bindingsResult, (bindings: Binding[]) => 
                     mapv(mapResult(parseL3CExp, body), (body: CExp[]) =>
                             makeLetExp(bindings, body)));
 }
-
-const parseLetPlusExp = (bindings: Sexp, body: Sexp[]): Result<LetPlusExp> => {
-    // todo : is same as let ?
-    if (!isGoodBindings(bindings)) {
-        return makeFailure('Malformed bindings in "let*" expression');
-    }
-    // Given (letrec ( (var <val>) ...) <cexp> ...)
-    // Return makeLetExp( [makeBinding(var, parse(<val>)) ...], [ parse(<cexp>) ...] )
-    // After isGoodBindings, bindings has type [string, Sexp][]
-    const vars = map(b => b[0], bindings);
-    const valsResult = mapResult(parseL3CExp, map(second, bindings));
-    const bindingsResult = mapv(valsResult, (vals: CExp[]) => zipWith(makeBinding, vars, vals));
-    return bind(bindingsResult, (bindings: Binding[]) =>
-                    mapv(mapResult(parseL3CExp, body), (body: CExp[]) =>
-                            makeLetPlusExp(bindings, body)));
-}
-
-
-
-
 
 // sexps has the shape (quote <sexp>)
 export const parseLitExp = (param: Sexp): Result<LitExp> =>
     mapv(parseSExp(param), (sexp: SExpValue) => makeLitExp(sexp));
 
 export const isDottedPair = (sexps: Sexp[]): boolean =>
-    sexps.length === 3 &&
+    sexps.length === 3 && 
     sexps[1] === "."
 
 export const makeDottedPair = (sexps : Sexp[]): Result<SExpValue> =>
-    bind(parseSExp(sexps[0]), (val1: SExpValue) =>
+    bind(parseSExp(sexps[0]), (val1: SExpValue) => 
         mapv(parseSExp(sexps[2]), (val2: SExpValue) =>
             makeCompoundSExp(val1, val2)));
 
@@ -288,10 +262,10 @@ export const parseSExp = (sexp: Sexp): Result<SExpValue> =>
     isDottedPair(sexp) ? makeDottedPair(sexp) :
     isArray(sexp) ? (
         // fail on (x . y z)
-        sexp[0] === '.' ? makeFailure("Bad dotted sexp: " + sexp) :
+        sexp[0] === '.' ? makeFailure("Bad dotted sexp: " + sexp) : 
         bind(parseSExp(first(sexp)), (val1: SExpValue) =>
             mapv(parseSExp(rest(sexp)), (val2: SExpValue) =>
-                makeCompoundSExp(val1, val2)))
+                makeCompoundSExp(val1, val2))) 
         ) :
     sexp;
 
@@ -312,15 +286,11 @@ const unparseLitExp = (le: LitExp): string =>
 const unparseLExps = (les: Exp[]): string =>
     map(unparseL3, les).join(" ");
 
-const unparseProcExp = (pe: ProcExp): string =>
+const unparseProcExp = (pe: ProcExp): string => 
     `(lambda (${map((p: VarDecl) => p.var, pe.args).join(" ")}) ${unparseLExps(pe.body)})`
 
-const unparseLetExp = (le: LetExp) : string =>
+const unparseLetExp = (le: LetExp) : string => 
     `(let (${map((b: Binding) => `(${b.var.var} ${unparseL3(b.val)})`, le.bindings).join(" ")}) ${unparseLExps(le.body)})`
-
-const unparseLetPlusExp = (le: LetExp) : string =>
-    `(let* (${map((b: Binding) => `(${b.var.var} ${unparseL3(b.val)})`, le.bindings).join(" ")}) ${unparseLExps(le.body)})`
-
 
 export const unparseL3 = (exp: Program | Exp): string =>
     isBoolExp(exp) ? valueToString(exp.val) :
