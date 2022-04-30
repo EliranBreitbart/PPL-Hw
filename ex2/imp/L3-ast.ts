@@ -6,7 +6,7 @@ import { first, second, rest, allT, isEmpty } from "../shared/list";
 import { isArray, isString, isNumericString, isIdentifier } from "../shared/type-predicates";
 import { Result, makeOk, makeFailure, bind, mapResult, mapv } from "../shared/result";
 import { parse as p, isSexpString, isToken } from "../shared/parser";
-import parse, { Sexp, Token } from "s-expression";
+import { Sexp, Token } from "s-expression";
 
 /*
 ;; =============================================================================
@@ -66,7 +66,6 @@ export interface Binding {tag: "Binding"; var: VarDecl; val: CExp; }
 export interface LetExp {tag: "LetExp"; bindings: Binding[]; body: CExp[]; }
 // L3
 export interface LitExp {tag: "LitExp"; val: SExpValue; }
-export interface LetPlusExp {tag : "LetPlusExp", bindings : Binding[]; body : CExp[]}
 
 // Type value constructors for disjoint types
 export const makeProgram = (exps: Exp[]): Program => ({tag: "Program", exps: exps});
@@ -93,9 +92,6 @@ export const makeLetExp = (bindings: Binding[], body: CExp[]): LetExp =>
 export const makeLitExp = (val: SExpValue): LitExp =>
     ({tag: "LitExp", val: val});
 
-export const makeLetPlusExp = (bindings: Binding[], body: CExp[]): LetPlusExp =>
-    ({tag: "LetPlusExp", bindings: bindings, body: body});
-
 // Type predicates for disjoint types
 export const isProgram = (x: any): x is Program => x.tag === "Program";
 export const isDefineExp = (x: any): x is DefineExp => x.tag === "DefineExp";
@@ -113,7 +109,6 @@ export const isProcExp = (x: any): x is ProcExp => x.tag === "ProcExp";
 export const isBinding = (x: any): x is Binding => x.tag === "Binding";
 export const isLetExp = (x: any): x is LetExp => x.tag === "LetExp";
 // L3
-export const isLetPlusExp = (x: any): x is LetPlusExp => x.tag === "LetPlusExp";
 export const isLitExp = (x: any): x is LitExp => x.tag === "LitExp";
 
 // Type predicates for type unions
@@ -165,7 +160,10 @@ export const parseL3SpecialForm = (op: Sexp, params: Sexp[]): Result<CExp> =>
     op === "if" ? parseIfExp(params) :
     op === "lambda" ? parseProcExp(first(params), rest(params)) :
     op === "let" ? parseLetExp(first(params), rest(params)) :
+<<<<<<< HEAD
     // op == "let*" ? parseLetPlusExp(first(params),rest(params)) :
+=======
+>>>>>>> c70beecbe6e760acea59e9e2ed66587335b0c439
     op === "quote" ? parseLitExp(first(params)) :
     makeFailure("Never");
 
@@ -292,15 +290,11 @@ const unparseLitExp = (le: LitExp): string =>
 const unparseLExps = (les: Exp[]): string =>
     map(unparseL3, les).join(" ");
 
-const unparseProcExp = (pe: ProcExp): string =>
+const unparseProcExp = (pe: ProcExp): string => 
     `(lambda (${map((p: VarDecl) => p.var, pe.args).join(" ")}) ${unparseLExps(pe.body)})`
 
-const unparseLetExp = (le: LetExp) : string =>
+const unparseLetExp = (le: LetExp) : string => 
     `(let (${map((b: Binding) => `(${b.var.var} ${unparseL3(b.val)})`, le.bindings).join(" ")}) ${unparseLExps(le.body)})`
-
-const unparseLetPlusExp = (le: LetExp) : string =>
-    `(let* (${map((b: Binding) => `(${b.var.var} ${unparseL3(b.val)})`, le.bindings).join(" ")}) ${unparseLExps(le.body)})`
-
 
 export const unparseL3 = (exp: Program | Exp): string =>
     isBoolExp(exp) ? valueToString(exp.val) :
