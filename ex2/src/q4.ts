@@ -27,9 +27,12 @@ const unparseProcExp = (pe: ProcExp): string =>
 const unparseLetExp = (le: LetExp) : string => 
     `(let (${map((b: Binding) => `(${b.var.var} ${unparseL3(b.val)})`, le.bindings).join(" ")}) ${unparseLExps(le.body)})`
 
+// const unparseAppExp = (rator : Exp, rands : Exp[]) : string =>
+//     isPrimOp(rator) ? `(${map(unparseL3, rands).join(` ${unparseL3(rator)} `)})` :
+//     `${unparseL3(rator)}(${map(unparseL3, rands).join(`,`)})`;
 const unparseAppExp = (rator : Exp, rands : Exp[]) : string => 
-    
-    isPrimOp(rator) ? `(${map(unparseL3, rands).join(` ${unparseL3(rator)} `)})` :
+    isPrimOp(rator) ? rator.op === "not" ? `(!${map(unparseL3, rands)})` :
+    `(${map(unparseL3, rands).join(` ${unparseL3(rator)} `)})` :
     `${unparseL3(rator)}(${map(unparseL3, rands).join(`,`)})`;
 
 const unparsePrimOp = (op : string) : string => {
