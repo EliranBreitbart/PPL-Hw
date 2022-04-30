@@ -43,6 +43,7 @@ const unparsePrimOp = (op : string) : string => {
     op === "and" ? "&&" :
     op === "string=?" ? "===" :
     op === "eq?" ? "===" :
+    op === "not" ? "!" :
     op;
 }
 
