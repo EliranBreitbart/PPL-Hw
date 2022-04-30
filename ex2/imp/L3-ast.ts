@@ -160,10 +160,6 @@ export const parseL3SpecialForm = (op: Sexp, params: Sexp[]): Result<CExp> =>
     op === "if" ? parseIfExp(params) :
     op === "lambda" ? parseProcExp(first(params), rest(params)) :
     op === "let" ? parseLetExp(first(params), rest(params)) :
-<<<<<<< HEAD
-    // op == "let*" ? parseLetPlusExp(first(params),rest(params)) :
-=======
->>>>>>> c70beecbe6e760acea59e9e2ed66587335b0c439
     op === "quote" ? parseLitExp(first(params)) :
     makeFailure("Never");
 
