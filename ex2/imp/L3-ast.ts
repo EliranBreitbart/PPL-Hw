@@ -165,7 +165,7 @@ export const parseL3SpecialForm = (op: Sexp, params: Sexp[]): Result<CExp> =>
     op === "if" ? parseIfExp(params) :
     op === "lambda" ? parseProcExp(first(params), rest(params)) :
     op === "let" ? parseLetExp(first(params), rest(params)) :
-    op == "let*" ? parseLetPlusExp(first(params),rest(params)) :
+    // op == "let*" ? parseLetPlusExp(first(params),rest(params)) :
     op === "quote" ? parseLitExp(first(params)) :
     makeFailure("Never");
 
