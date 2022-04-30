@@ -35,13 +35,13 @@ import parse, { Sexp, Token } from "s-expression";
 ;;         |  ( <cexp> <cexp>* )            / AppExp(operator:CExp, operands:CExp[]))
 ;; <binding>  ::= ( <var> <cexp> )           / Binding(var:VarDecl, val:Cexp)
 ;; <prim-op>  ::= + | - | * | / | < | > | = | not |  and | or | eq? | string=?
-;;                  | cons | car | cdr | pair? | number? | list 
+;;                  | cons | car | cdr | pair? | number? | list
 ;;                  | boolean? | symbol? | string?      ##### L3
 ;; <num-exp>  ::= a number token
 ;; <bool-exp> ::= #t | #f
 ;; <var-ref>  ::= an identifier token
 ;; <var-decl> ::= an identifier token
-;; <sexp>     ::= symbol | number | bool | string | 
+;; <sexp>     ::= symbol | number | bool | string |
 ;;                (<sexp>+ . <sexp>) | ( <sexp>* )       ##### L3
 */
 
@@ -151,7 +151,7 @@ export const parseL3Exp = (sexp: Sexp): Result<Exp> =>
     sexp;
 
 // Compound -> DefineExp | CompoundCExp
-export const parseL3CompoundExp = (op: Sexp, params: Sexp[]): Result<Exp> => 
+export const parseL3CompoundExp = (op: Sexp, params: Sexp[]): Result<Exp> =>
     op === "define"? parseDefine(params) :
     parseL3CompoundCExp(op, params);
 
@@ -165,7 +165,7 @@ export const parseL3SpecialForm = (op: Sexp, params: Sexp[]): Result<CExp> =>
     op === "if" ? parseIfExp(params) :
     op === "lambda" ? parseProcExp(first(params), rest(params)) :
     op === "let" ? parseLetExp(first(params), rest(params)) :
-    op == "let*" ? parseLetPlusExp(first(params),rest(params)) :
+    op === "let*" ? parseLetPlusExp(first(params),rest(params)) :
     op === "quote" ? parseLitExp(first(params)) :
     makeFailure("Never");
 
@@ -195,7 +195,7 @@ export const parseL3Atomic = (token: Token): Result<CExp> =>
     isString(token) && isPrimitiveOp(token) ? makeOk(makePrimOp(token)) :
     isString(token) ? makeOk(makeVarRef(token)) :
     makeOk(makeStrExp(token.toString()));
-
+;
 /*
     ;; <prim-op>  ::= + | - | * | / | < | > | = | not | and | or | eq? | string=?
     ;;                  | cons | car | cdr | pair? | number? | list
@@ -210,13 +210,13 @@ const isSpecialForm = (x: string): boolean =>
     ["if", "lambda", "let", "quote"].includes(x);
 
 const parseAppExp = (op: Sexp, params: Sexp[]): Result<AppExp> =>
-    bind(parseL3CExp(op), (rator: CExp) => 
+    bind(parseL3CExp(op), (rator: CExp) =>
         mapv(mapResult(parseL3CExp, params), (rands: CExp[]) =>
             makeAppExp(rator, rands)));
 
 const parseIfExp = (params: Sexp[]): Result<IfExp> =>
     params.length !== 3 ? makeFailure("Expression not of the form (if <cexp> <cexp> <cexp>)") :
-    mapv(mapResult(parseL3CExp, params), (cexps: CExp[]) => 
+    mapv(mapResult(parseL3CExp, params), (cexps: CExp[]) =>
         makeIfExp(cexps[0], cexps[1], cexps[2]));
 
 const parseProcExp = (vars: Sexp, body: Sexp[]): Result<ProcExp> =>
@@ -239,21 +239,41 @@ const parseLetExp = (bindings: Sexp, body: Sexp[]): Result<LetExp> => {
     const vars = map(b => b[0], bindings);
     const valsResult = mapResult(parseL3CExp, map(second, bindings));
     const bindingsResult = mapv(valsResult, (vals: CExp[]) => zipWith(makeBinding, vars, vals));
-    return bind(bindingsResult, (bindings: Binding[]) => 
+    return bind(bindingsResult, (bindings: Binding[]) =>
                     mapv(mapResult(parseL3CExp, body), (body: CExp[]) =>
                             makeLetExp(bindings, body)));
 }
+
+const parseLetPlusExp = (bindings: Sexp, body: Sexp[]): Result<LetPlusExp> => {
+    // todo : is same as let ?
+    if (!isGoodBindings(bindings)) {
+        return makeFailure('Malformed bindings in "let*" expression');
+    }
+    // Given (letrec ( (var <val>) ...) <cexp> ...)
+    // Return makeLetExp( [makeBinding(var, parse(<val>)) ...], [ parse(<cexp>) ...] )
+    // After isGoodBindings, bindings has type [string, Sexp][]
+    const vars = map(b => b[0], bindings);
+    const valsResult = mapResult(parseL3CExp, map(second, bindings));
+    const bindingsResult = mapv(valsResult, (vals: CExp[]) => zipWith(makeBinding, vars, vals));
+    return bind(bindingsResult, (bindings: Binding[]) =>
+                    mapv(mapResult(parseL3CExp, body), (body: CExp[]) =>
+                            makeLetPlusExp(bindings, body)));
+}
+
+
+
+
 
 // sexps has the shape (quote <sexp>)
 export const parseLitExp = (param: Sexp): Result<LitExp> =>
     mapv(parseSExp(param), (sexp: SExpValue) => makeLitExp(sexp));
 
 export const isDottedPair = (sexps: Sexp[]): boolean =>
-    sexps.length === 3 && 
+    sexps.length === 3 &&
     sexps[1] === "."
 
 export const makeDottedPair = (sexps : Sexp[]): Result<SExpValue> =>
-    bind(parseSExp(sexps[0]), (val1: SExpValue) => 
+    bind(parseSExp(sexps[0]), (val1: SExpValue) =>
         mapv(parseSExp(sexps[2]), (val2: SExpValue) =>
             makeCompoundSExp(val1, val2)));
 
@@ -268,10 +288,10 @@ export const parseSExp = (sexp: Sexp): Result<SExpValue> =>
     isDottedPair(sexp) ? makeDottedPair(sexp) :
     isArray(sexp) ? (
         // fail on (x . y z)
-        sexp[0] === '.' ? makeFailure("Bad dotted sexp: " + sexp) : 
+        sexp[0] === '.' ? makeFailure("Bad dotted sexp: " + sexp) :
         bind(parseSExp(first(sexp)), (val1: SExpValue) =>
             mapv(parseSExp(rest(sexp)), (val2: SExpValue) =>
-                makeCompoundSExp(val1, val2))) 
+                makeCompoundSExp(val1, val2)))
         ) :
     sexp;
 
