@@ -1,10 +1,10 @@
-import { map, reduce } from 'ramda';
 import { Exp, Program } from '../imp/L3-ast';
-import { isEmptySExp, isSymbolSExp, valueToString, isCompoundSExp } from '../imp/L3-value';
 import { bind } from '../shared/optional';
 import { Result, makeFailure, makeOk, isFailure } from '../shared/result';
 import { IfExp, NumExp, BoolExp, DefineExp, StrExp, PrimOp, VarRef ,VarDecl, AppExp, ProcExp, LetExp, Binding, isAppExp, isBoolExp, isDefineExp, isIfExp, isLetExp, isLitExp, isNumExp, isPrimOp, isProcExp, isProgram, isStrExp, isVarRef, LitExp, CExp   } from '../imp/L3-ast'
 ;
+import { map } from 'ramda';
+import { isCompoundSExp, isEmptySExp, isSymbolSExp, valueToString } from '../imp/L3-value';
 /*
 Purpose: Transform L3 AST to JavaScript program string
 Signature: l30ToJS(l2AST)
@@ -15,7 +15,7 @@ const unparseLitExp = (le: LitExp): string =>
     isSymbolSExp(le.val) ? `Symbol.for("${valueToString(le.val)}")` :
     isCompoundSExp(le.val) ? `${valueToString(le.val)}` :
     `${le.val}`;
-
+    
 const unparseLExps = (les: Exp[]): string =>
     map(unparseL3, les).join(" ");
 

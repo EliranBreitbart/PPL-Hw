@@ -123,7 +123,7 @@ export const isAtomicExp = (x: any): x is AtomicExp =>
     isNumExp(x) || isBoolExp(x) || isStrExp(x) ||
     isPrimOp(x) || isVarRef(x);
 export const isCompoundExp = (x: any): x is CompoundExp =>
-    isAppExp(x) || isIfExp(x) || isProcExp(x) || isLitExp(x) || isLetExp(x);
+    isAppExp(x) || isIfExp(x) || isProcExp(x) || isLitExp(x) || isLetExp(x) || isLetPlusExp(x); 
 export const isCExp = (x: any): x is CExp =>
     isAtomicExp(x) || isCompoundExp(x);
 
@@ -208,7 +208,7 @@ const isPrimitiveOp = (x: string): boolean =>
      "number?", "boolean?", "symbol?", "string?"].includes(x);
 
 const isSpecialForm = (x: string): boolean =>
-    ["if", "lambda", "let", "quote"].includes(x);
+    ["if", "lambda", "let","let*", "quote"].includes(x);
 
 const parseAppExp = (op: Sexp, params: Sexp[]): Result<AppExp> =>
     bind(parseL31CExp(op), (rator: CExp) => 
@@ -252,7 +252,7 @@ const parseLetPlusExp = (bindings: Sexp, body: Sexp[]): Result<LetPlusExp> => {
         return makeFailure('Malformed bindings in "let*" expression');
     }
     // Given (letrec ( (var <val>) ...) <cexp> ...)
-    // Return makeLetExp( [makeBinding(var, parse(<val>)) ...], [ parse(<cexp>) ...] )
+    // Return makeLetPlusExp( [makeBinding(var, parse(<val>)) ...], [ parse(<cexp>) ...] )
     // After isGoodBindings, bindings has type [string, Sexp][]
     const vars = map(b => b[0], bindings);
     const valsResult = mapResult(parseL31CExp, map(second, bindings));
