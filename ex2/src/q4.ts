@@ -9,7 +9,11 @@ Type: [EXP | Program] => Result<string>
 */
 const parse_if = (ifexp : IfExp): Result <string> => makeOk("nothing")
 
-export const l30ToJS = (exp: Exp | Program): Result<string>  =>
-    isBoolEXP ? pars_bool and add to the string result :
-    is if? ...........
+// [let exp, bool exp, Appexp]
+// for every element in the program - to string it 
+//
+export const l30ToJS = (exp: Exp | Program): Result<string>  => 
     makeFailure("TODO");
+    // isBoolEXP ? pars_bool and add to the string result :
+    // is if? ...........
+    // makeFailure("TODO");

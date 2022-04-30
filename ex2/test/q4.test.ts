@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import { parseL3, parseL3Exp } from '../imp/L3-ast';
 import { bind, Result, makeOk } from '../shared/result';
-import { l30ToJS } from '../src/q4';
+// import { l30ToJS } from '../src/q4';
 import { parse as p } from "../shared/parser";
 
 const l30toJSResult = (x: string): Result<string> =>
