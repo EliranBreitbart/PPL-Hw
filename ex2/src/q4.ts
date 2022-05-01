@@ -51,7 +51,7 @@ const unparsePrimOp = (op : string) : string => {
 }
 
 export const unparseL3 = (exp: Program | Exp): string =>
-    isBoolExp(exp) ? valueToString(exp.val) :
+    isBoolExp(exp) ? (exp.val ? "true" : "false") :
     isNumExp(exp) ? valueToString(exp.val) :
     isStrExp(exp) ? valueToString(exp.val) :
     isLitExp(exp) ? unparseLitExp(exp) :
